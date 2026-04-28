@@ -14,6 +14,7 @@
     body { background: #0f1117; color: #f0ece4; font-family: Georgia, serif; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     .fade-in { animation: fadeIn 0.3s ease; }
+    .slide-in { animation: fadeIn 0.25s ease; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0f1117; }
     ::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 3px; }
@@ -34,24 +35,18 @@ const DOMAIN_META = {
   "Strategic Thinking":    { short: "ST", color: "#7c5cbf" },
   "Influencing":           { short: "IN", color: "#d4763b" },
 };
-
 const DOMAIN_MAP = {
-  Achiever:"Executing", Arranger:"Executing", Belief:"Executing", Consistency:"Executing",
-  Deliberative:"Executing", Discipline:"Executing", Focus:"Executing",
-  Responsibility:"Executing", Restorative:"Executing",
-  Activator:"Influencing", Command:"Influencing", Communication:"Influencing",
-  Competition:"Influencing", Maximizer:"Influencing", Significance:"Influencing", Woo:"Influencing",
-  "Self-Assurance":"Influencing",
-  Adaptability:"Relationship Building", Connectedness:"Relationship Building",
-  Developer:"Relationship Building", Empathy:"Relationship Building",
-  Harmony:"Relationship Building", Includer:"Relationship Building",
-  Individualization:"Relationship Building", Positivity:"Relationship Building",
-  Relator:"Relationship Building",
-  Analytical:"Strategic Thinking", Context:"Strategic Thinking", Futuristic:"Strategic Thinking",
-  Ideation:"Strategic Thinking", Input:"Strategic Thinking", Intellection:"Strategic Thinking",
-  Learner:"Strategic Thinking", Strategic:"Strategic Thinking",
+  Achiever:"Executing",Arranger:"Executing",Belief:"Executing",Consistency:"Executing",
+  Deliberative:"Executing",Discipline:"Executing",Focus:"Executing",Responsibility:"Executing",Restorative:"Executing",
+  Activator:"Influencing",Command:"Influencing",Communication:"Influencing",Competition:"Influencing",
+  Maximizer:"Influencing",Significance:"Influencing",Woo:"Influencing","Self-Assurance":"Influencing",
+  Adaptability:"Relationship Building",Connectedness:"Relationship Building",Developer:"Relationship Building",
+  Empathy:"Relationship Building",Harmony:"Relationship Building",Includer:"Relationship Building",
+  Individualization:"Relationship Building",Positivity:"Relationship Building",Relator:"Relationship Building",
+  Analytical:"Strategic Thinking",Context:"Strategic Thinking",Futuristic:"Strategic Thinking",
+  Ideation:"Strategic Thinking",Input:"Strategic Thinking",Intellection:"Strategic Thinking",
+  Learner:"Strategic Thinking",Strategic:"Strategic Thinking",
 };
-
 const MEMBERS = [
   { name:"Leah Curtsinger",  first:"Leah",     color:"#e05c8a", top10:["Empathy","Individualization","Strategic","Arranger","Belief","Communication","Developer","Learner","Ideation","Connectedness"] },
   { name:"Peter Droege",     first:"Peter",    color:"#4a9b6f", top10:["Connectedness","Achiever","Belief","Strategic","Arranger","Positivity","Learner","Responsibility","Developer","Context"] },
@@ -63,37 +58,62 @@ const MEMBERS = [
   { name:"Allison Stuart",   first:"Allison",  color:"#f472b6", top10:["Communication","Arranger","Woo","Strategic","Significance","Achiever","Individualization","Positivity","Focus","Activator"] },
   { name:"Richard Yates",    first:"Richard",  color:"#d4763b", top10:["Learner","Achiever","Intellection","Competition","Consistency","Restorative","Analytical","Input","Arranger","Self-Assurance"] },
 ];
-
 const DOMAINS = ["Executing","Influencing","Relationship Building","Strategic Thinking"];
 const TOTAL = 90;
+const domainCount = (s) => { const dc={}; DOMAINS.forEach(d=>dc[d]=0); s.forEach(x=>{if(DOMAIN_MAP[x])dc[DOMAIN_MAP[x]]++;}); return dc; };
+const memberDomains = MEMBERS.map(m=>({...m,dc:domainCount(m.top10)}));
+const domainTotals = {"Relationship Building":28,"Executing":25,"Strategic Thinking":22,"Influencing":15};
+const domainData = Object.entries(domainTotals).map(([name,count])=>({name,count,...DOMAIN_META[name]}));
+const overlap = MEMBERS.map((a,i)=>MEMBERS.map((b,j)=>{ if(i===j)return{count:-1,shared:[]}; const shared=a.top10.filter(s=>b.top10.includes(s)); return{count:shared.length,shared}; }));
+const freq={}; MEMBERS.forEach(m=>m.top10.forEach(s=>{freq[s]=(freq[s]||0)+1;}));
+const sharedStrengths=Object.entries(freq).sort((a,b)=>b[1]-a[1]).filter(([,n])=>n>=3).map(([s,n])=>{ const domain=DOMAIN_MAP[s]||"Unknown"; return{strength:s,count:n,domain,color:(DOMAIN_META[domain]||{color:"#888"}).color,who:MEMBERS.filter(m=>m.top10.includes(s)).map(m=>m.first)}; });
 
-const domainCount = (strengths) => {
-  const dc = {}; DOMAINS.forEach(d => dc[d] = 0);
-  strengths.forEach(s => { if (DOMAIN_MAP[s]) dc[DOMAIN_MAP[s]]++; });
-  return dc;
+const TEAM_PROFILE = [
+  { heading: "Our Superpower", text: "This team runs on relationships and results. With Relationship Building as the dominant domain, the Grants Team has an unusual gift — the ability to do rigorous, high-stakes work while genuinely caring about the people involved, both inside the team and out. You do not just complete grants, you build trust with partners, advocates, and communities in a way that most teams simply cannot replicate." },
+  { heading: "How We Work", text: "The Executing core — anchored by Achiever, Arranger, Responsibility, and Consistency across multiple members — means this team actually finishes what it starts. Ideas get implemented. Deadlines get met. Follow-through is not something you have to remind each other about; it is just how you are wired. Strategic Thinking runs underneath everything quietly. Several members carry Learner, Strategic, Context, and Analytical, which means the team is always absorbing information, asking why, and connecting dots across time and context. You tend to make good decisions because you have already thought three moves ahead, even when it does not look like it." },
+  { heading: "Our Blind Spot", text: "The honest gap is Influencing. This is a team that prefers to earn trust slowly and do excellent work rather than sell loudly. That is a genuine strength in a grants environment — but it can mean the team undersells itself upward, hesitates to push back on bad direction, or waits too long to generate urgency when urgency is needed. Luke and Allison carry the team's Influencing energy almost entirely. When something needs to be championed loudly, make sure one of them is in the room." },
+  { heading: "Watch Out For", text: "This much Harmony, Empathy, and Relator means the team is exceptionally good at keeping the peace — sometimes too good. Hard truths can get softened, difficult conversations can get delayed, and consensus can become a default even when someone privately disagrees. The team works best when it gives itself explicit permission to be direct." },
+];
+
+function pairKey(a,b) { return [a,b].sort().join("|"); }
+const PAIR_NARRATIVES = {
+  [pairKey("Leah","Peter")]: { shared:"Strategic, Arranger, Belief, Learner, Developer, Connectedness", text:"These two are more alike than they probably realize. Shared Belief means they are both doing this work for reasons that go beyond the job description, and shared Arranger means they both instinctively start reorganizing a situation the moment they walk into it. Where they diverge: Leah reads people first, Peter reads systems and responsibility first. That difference is more complementary than it sounds — Leah catches what the data misses and Peter catches what the feelings obscure. Watch out for over-agreeing; two people this aligned can reinforce each other's blind spots without noticing." },
+  [pairKey("Leah","Jonathan")]: { shared:"Empathy, Belief, Developer, Communication", text:"This is the team's warmth engine. Both lead with Empathy and both invest deeply in the people around them — which means in a room together they will absolutely make whoever they are talking to feel like the most important person in the building. Shared Developer means they both get genuine joy from watching people grow. The watch-out is that two high-Empathy people can struggle to deliver hard news to each other or to others when it is needed. Give each other permission to be honest, not just kind." },
+  [pairKey("Leah","Nick")]: { shared:"Belief, Developer, Learner, Communication", text:"Leah and Nick share a quiet but powerful common thread — both believe what they are doing matters, both want to grow the people around them, and both keep learning long after the meeting ends. Leah brings the emotional intelligence and big-picture Strategic thinking; Nick brings the Analytical precision and structured Input. Together they cover the full arc from insight to implementation. The watch-out: Leah processes through people and connection, Nick processes through data and logic — make sure they are translating for each other rather than talking past." },
+  [pairKey("Leah","Andrea")]: { shared:"Empathy, Strategic, Arranger, Developer", text:"Two of the team's most people-centered members, and both far more strategically sharp than their warmth might suggest. Shared Arranger means they are both quietly rearranging the pieces of a project in their heads during every conversation. Leah brings Ideation and big-picture creativity; Andrea brings Consistency and careful Deliberation. The watch-out: both are so attuned to others that they can sometimes defer when they should advocate. When these two agree on something, they should say it louder." },
+  [pairKey("Leah","Luke")]: { shared:"Strategic, Communication, Learner, Individualization", text:"On the surface Leah and Luke seem like they would operate very differently — and they do — but they share more wiring than expected. Both see strategy clearly and both are wired to understand what makes each individual person tick. Where they diverge: Luke processes the world through competition and results, Leah through empathy and connection. That is actually a great combination for grant work — Luke spots the opportunity and Leah figures out how to bring the right people along." },
+  [pairKey("Leah","Jake")]: { shared:"Arranger, Communication, Ideation, Connectedness", text:"These two are the team's creative collaborators. Shared Ideation means that when they start riffing together, ideas come fast and get genuinely interesting. Shared Arranger means they can also actually build something from those ideas, which not every creative pairing can do. Jake brings Adaptability and relational warmth; Leah brings Empathy and depth. The watch-out: both can get so excited about the creative process that the actual deadline quietly disappears. Someone else may need to be the timekeeper." },
+  [pairKey("Leah","Allison")]: { shared:"Strategic, Arranger, Communication, Individualization", text:"Both see the big picture, both can articulate it clearly, and both naturally read what each individual person in the room needs — which makes them quietly formidable together. Allison brings the activation energy and visibility; Leah brings the emotional depth and follow-through care. The watch-out: Allison moves fast and Leah processes thoroughly, so they can occasionally frustrate each other's pace. Naming that difference early turns it from friction into a feature." },
+  [pairKey("Leah","Richard")]: { shared:"Learner, Arranger", text:"The pair with the least surface overlap on paper and possibly the most to gain from each other. Leah leads with Empathy and human connection; Richard leads with Analytical rigor and Intellection. They will approach almost every problem differently — and that is the whole point. Leah will humanize conclusions Richard might otherwise deliver too clinically; Richard will pressure-test ideas Leah might otherwise take on faith. The watch-out: give each other the benefit of the doubt early. What looks like coldness from Richard is usually precision, and what looks like imprecision from Leah is usually context." },
+  [pairKey("Peter","Jonathan")]: { shared:"Belief, Positivity, Developer, Context", text:"Two of the team's quietest anchors. Both carry deep Belief — they are not just doing a job — and both invest in developing the people around them. Shared Positivity means they tend to create an environment where people feel capable and encouraged. Where they differ: Peter leans into Responsibility and execution; Jonathan into Harmony and relationship preservation. Together they make an excellent partnership for anything that requires both getting it done and keeping people whole in the process." },
+  [pairKey("Peter","Nick")]: { shared:"Belief, Positivity, Learner, Developer, Responsibility", text:"Peter and Nick share so much foundational wiring that they likely feel immediately trustworthy to each other. Both are driven by Belief, both develop others, both take Responsibility seriously enough that it almost stresses them out when others do not. Nick adds Analytical rigor that Peter's profile does not carry; Peter adds Achiever drive and Connectedness that Nick is lighter on. This is a pairing built for long projects that require both care and follow-through." },
+  [pairKey("Peter","Andrea")]: { shared:"Achiever, Strategic, Arranger, Developer", text:"Two of the team's most reliable builders. Both get things done, both think strategically, and both invest in the people doing the work. The difference is texture: Peter's execution is driven by Responsibility and a sense of personal accountability; Andrea's is driven by Relator trust and careful Deliberation. They will rarely disagree on the destination, occasionally on the pace. Peter may push sooner; Andrea will want to think it through one more time. Both are usually right." },
+  [pairKey("Peter","Luke")]: { shared:"Achiever, Positivity, Strategic, Learner, Context", text:"A stronger pairing than it might look from the outside. Both are Achievers, both think strategically, both keep learning. Luke brings the Woo and Competition energy that gets people excited and moving; Peter brings the Responsibility and steady execution that makes sure it actually gets done. The watch-out: Luke can find Peter's methodical pace a little slow; Peter can find Luke's velocity a little reckless. They balance each other well when they trust that difference rather than fighting it." },
+  [pairKey("Peter","Jake")]: { shared:"Arranger, Positivity, Context, Connectedness", text:"Peter and Jake both read context well and both light up around people, just differently. Jake processes the world through relationships and ideas; Peter through responsibility and systems. Shared Positivity means they are both good for team morale. Jake will bring creative energy and new angles; Peter will bring the structure that makes those angles buildable. The watch-out: Jake adapts fluidly and Peter holds consistent — in a crisis that is a gift, in a normal project it can occasionally feel like one is floating and the other is over-anchored." },
+  [pairKey("Peter","Allison")]: { shared:"Achiever, Strategic, Arranger, Positivity", text:"On the surface this pairing looks similar — both results-oriented, both positive, both strategic. The real difference is fuel: Allison runs on Woo, Significance, and Activator — she needs to be seen and to start things. Peter runs on Responsibility and Belief — he needs to know the work matters and gets done right. Neither is wrong, and they rarely get in each other's way. The watch-out: Peter may occasionally wish Allison would slow down; Allison may occasionally wish Peter would speed up." },
+  [pairKey("Peter","Richard")]: { shared:"Achiever, Learner, Arranger", text:"Both get things done and both keep learning — that is the foundation. Beyond that, they operate quite differently. Peter leads with relationships and Belief; Richard leads with analysis and Intellection. Richard will bring the data; Peter will bring the meaning behind it. The watch-out: Richard's directness and Peter's Responsibility-driven caution can occasionally create tension when timelines are tight. They work best when they are explicit about what lane each is in." },
+  [pairKey("Jonathan","Nick")]: { shared:"Developer, Relator, Belief, Positivity, Communication, Discipline", text:"The highest overlap pairing on the team — and it shows. Jonathan and Nick are likely to feel immediately comfortable with each other, share values intuitively, and communicate without much translation needed. Both develop others, both build deep relationships, both operate with quiet discipline and genuine Belief. The watch-out is groupthink: two people this aligned can reinforce each other's perspective without either of them realizing it. Actively seek out someone who sees it differently before locking in a conclusion." },
+  [pairKey("Jonathan","Andrea")]: { shared:"Consistency, Empathy, Harmony, Developer, Relator", text:"Two of the most relationally attuned people on the team, and both deeply consistent in how they show up. They share an instinct for harmony, for developing others, and for reading the emotional temperature of a room accurately. Where they differ: Andrea adds Deliberative caution and Strategic planning; Jonathan adds Positivity and Communication warmth. Together they are the team's emotional foundation. The watch-out: both value harmony enough that they may avoid a necessary conflict. Someone has to go first." },
+  [pairKey("Jonathan","Luke")]: { shared:"Context, Positivity, Communication", text:"A pairing with genuine complementarity and a little productive friction. Luke brings the energy, the push, the results-orientation; Jonathan brings the relational depth, the care, and the patience. Both can communicate well and both bring Positivity, which means they tend to enjoy each other even when they are operating differently. The watch-out: Luke moves fast and Jonathan is deliberate — in a deadline crunch Luke may feel Jonathan is holding back; Jonathan may feel Luke is not thinking far enough ahead. Name it and it resolves quickly." },
+  [pairKey("Jonathan","Jake")]: { shared:"Context, Positivity, Relator, Communication", text:"Warm, easy, and creative. Both connect with people naturally, both read context well, and both bring genuine Positivity that makes rooms better. Jake adds Ideation and Adaptability; Jonathan adds Empathy and Harmony. Together they are excellent for any work that requires both generating ideas and bringing people along emotionally. The watch-out: neither is a natural pusher — projects they co-own may benefit from a third person who creates urgency." },
+  [pairKey("Jonathan","Allison")]: { shared:"Positivity, Communication", text:"Different enough to be genuinely complementary. Allison activates and communicates outward; Jonathan nurtures and communicates inward. Both bring Positivity but deploy it differently — Allison's is energizing and forward-leaning, Jonathan's is grounding and stabilizing. The watch-out: Allison's pace and Significance-driven visibility can occasionally feel like a lot to Jonathan's Harmony-driven instincts. Jonathan's measured care can feel slow to Allison. Both are right about what matters — they just weigh things differently." },
+  [pairKey("Jonathan","Richard")]: { shared:"Consistency", text:"The most complementary pairing on the team by design. Jonathan has five Relationship Building themes; Richard has zero. Richard has four Strategic Thinking themes; Jonathan has one. These two genuinely need each other — Richard will sharpen Jonathan's thinking with data and precision; Jonathan will translate Richard's conclusions into something the team can emotionally connect to. Jonathan's Developer strength means he will naturally want to invest in building that partnership. Let it happen." },
+  [pairKey("Nick","Andrea")]: { shared:"Developer, Relator", text:"Both are quiet investors in the people around them — Developer and Relator show up in both profiles, which means they build trust slowly and genuinely. Where they diverge significantly: Nick brings Analytical rigor and data-driven Input; Andrea brings Empathy, Harmony, and careful Deliberation. Nick processes through frameworks; Andrea processes through relationships and values. The watch-out: they may reach the same conclusion through such different paths that they talk past each other briefly. Worth slowing down to compare reasoning, not just results." },
+  [pairKey("Nick","Luke")]: { shared:"Positivity, Learner, Communication", text:"Nick and Luke do not share a ton of wiring but they share something important: both are genuinely positive and both keep growing. Luke brings the activation energy and competitive drive; Nick brings the analytical depth and relational care that Luke's profile is lighter in. This is a good pairing for anything that needs both a champion and a thinker. The watch-out: Luke operates at speed and Nick is more deliberate — Luke should resist finishing Nick's sentences, and Nick should resist over-qualifying when Luke needs a quick read." },
+  [pairKey("Nick","Jake")]: { shared:"Relator, Positivity, Communication", text:"Two of the team's warmer profiles, and both genuinely good with people — just differently. Jake is socially wide; Nick is relationally deep. Jake brings creativity and ideation; Nick brings structure and analytical precision. The watch-out: Jake moves intuitively and quickly; Nick wants the data before moving. In a brainstorm this is great; in a tight deadline it needs some negotiation." },
+  [pairKey("Nick","Allison")]: { shared:"Positivity, Communication", text:"Complementary in nearly every direction. Allison activates, energizes, and sells; Nick analyzes, steadies, and builds. Both communicate well, which means they can actually bridge their differences effectively when they try. Nick's Developer instinct will quietly appreciate Allison's belief in people; Allison's Activator will appreciate that Nick delivers what he commits to. The watch-out: Allison's pace can feel pressuring to Nick's deliberate style. Give each other a little runway." },
+  [pairKey("Nick","Richard")]: { shared:"Analytical, Learner, Input", text:"The team's two most analytically wired members — and the pairing that will produce the most rigorous thinking on the team when they work together. Both absorb information deeply, both ask hard questions, both keep learning. Where they differ: Nick leads with relationships and human development; Richard leads with logic and structured analysis. Nick will bring the heart to Richard's head. The watch-out: two Analytical thinkers can occasionally over-engineer a solution. Know when good enough is actually good enough." },
+  [pairKey("Andrea","Luke")]: { shared:"Achiever, Strategic", text:"One of the more complementary pairings on the team. Andrea brings every Executing and Relationship Building theme that Luke lacks; Luke brings every Influencing theme that Andrea lacks. Both are results-oriented, which means they agree on where they are going — they just get there very differently. Luke will push; Andrea will steady. Luke will sell; Andrea will deliver. The watch-out: their different pacing can occasionally read as impatience from Luke and overcaution from Andrea. Name it and it becomes the partnership's greatest asset." },
+  [pairKey("Andrea","Jake")]: { shared:"Relator, Adaptability, Arranger", text:"A comfortable, creative pairing. Both are warm, both adapt well, both can rearrange pieces on the fly. Andrea brings strategic depth and careful Deliberation; Jake brings Ideation and social energy. Andrea will help Jake's ideas land reliably; Jake will help Andrea's careful work feel alive and engaging. The watch-out: both can be accommodating enough that neither pushes back when a push is exactly what is needed. Give each other explicit permission to challenge." },
+  [pairKey("Andrea","Allison")]: { shared:"Achiever, Strategic, Arranger", text:"Two high-output members who both get things done and both think strategically. Where they diverge: Allison leads with Communication, Woo, and Significance — she needs visibility and activation; Andrea leads with Relator, Empathy, and Harmony — she needs trust and consistency. Together they cover a lot of ground. Allison opens doors; Andrea builds what is behind them. The watch-out: Allison's pace and Andrea's deliberateness can occasionally create tension. Both need to trust that the other's instincts are right for their part of the work." },
+  [pairKey("Andrea","Richard")]: { shared:"Achiever, Consistency, Arranger", text:"Both are disciplined, consistent, and wired to finish what they start. That shared Executing DNA means they work well together without a lot of overhead — expectations are clear, follow-through is mutual. Where they differ: Andrea leads with Empathy, Harmony, and Relator; Richard has none of those. Andrea will bring the relational warmth that Richard's work needs to land with people; Richard will bring the analytical precision that Andrea's careful thinking can sometimes lack. Quietly one of the most effective pairings on the team." },
+  [pairKey("Luke","Jake")]: { shared:"Woo, Context, Communication, Positivity", text:"The team's social engine. Both are high-energy, both read the room, both can charm almost anyone, and both bring genuine Positivity that makes people want to be around them. Luke brings the competitive drive and strategic clarity; Jake brings the creative ideation and relational depth. They are excellent at starting things together. The watch-out: neither is a natural finisher, and their mutual enthusiasm can lead to a lot of exciting conversations that need someone else to close. Great co-presenters. Questionable co-project-managers without a third anchor." },
+  [pairKey("Luke","Allison")]: { shared:"Achiever, Woo, Communication, Strategic, Positivity, Individualization", text:"The highest-energy pairing on the team and the one most likely to accidentally take over a meeting — in the best possible way. Both are Influencing powerhouses, both are results-driven, both know how to read and move a room. The watch-out is real: two people this similar can create a feedback loop of confidence that moves fast but skips the careful thinking the team's other members would bring. Lean on the rest of the team before locking in decisions made in this pairing's enthusiasm." },
+  [pairKey("Luke","Richard")]: { shared:"Achiever, Competition, Learner", text:"Two competitors who keep score and keep learning — that shared wiring creates instant mutual respect. Both are driven to win and driven to know more. Where they diverge: Luke wins through people, energy, and charm; Richard wins through precision, analysis, and rigor. Together they cover the full competitive toolkit. The watch-out: both can be direct enough that if they disagree, they disagree loudly. That is usually fine — just make sure the rest of the team is not caught in the crossfire." },
+  [pairKey("Jake","Allison")]: { shared:"Arranger, Woo, Positivity, Communication", text:"Two of the team's most socially alive members, and both genuinely fun to be around. Shared Woo means they both love meeting new people; shared Communication means they both know how to tell a story. Jake brings the Ideation and creative texture; Allison brings the Significance and activation urgency. Together they are exceptional at launching things — campaigns, conversations, initiatives. The watch-out: two strong starters need to build in accountability for finishing." },
+  [pairKey("Jake","Richard")]: { shared:"Intellection, Arranger", text:"An interesting pairing. On the surface they do not seem to overlap much — Jake is warm, social, ideation-driven; Richard is analytical, precise, Intellection-heavy. But the shared Intellection is meaningful: both think deeply, they just process very differently. Jake thinks out loud and relationally; Richard thinks internally and systematically. The watch-out: Jake's adaptive impressionistic style can feel imprecise to Richard; Richard's directness can feel blunt to Jake's relational instincts. Worth building a little trust before going deep." },
+  [pairKey("Allison","Richard")]: { shared:"Achiever, Arranger", text:"Both get things done — that is the shared foundation and it is a strong one. Beyond that, these two are probably the most different members on the team. Allison is the team's most visible energy; Richard is the team's most rigorous thinker. Allison sells the vision; Richard stress-tests it. In a healthy dynamic, Richard is the best thing that could happen to Allison's ideas, and Allison is the best thing that could happen to Richard's conclusions. The watch-out: Allison moves fast and needs buy-in; Richard is deliberate and skeptical of speed. Name that tension early and it becomes one of the team's most valuable creative partnerships." },
 };
-
-const memberDomains = MEMBERS.map(m => ({ ...m, dc: domainCount(m.top10) }));
-const domainTotals = { "Relationship Building":28, "Executing":25, "Strategic Thinking":22, "Influencing":15 };
-const domainData = Object.entries(domainTotals).map(([name, count]) => ({ name, count, ...DOMAIN_META[name] }));
-
-const overlap = MEMBERS.map((a,i) =>
-  MEMBERS.map((b,j) => {
-    if (i===j) return { count:-1, shared:[] };
-    const shared = a.top10.filter(s => b.top10.includes(s));
-    return { count:shared.length, shared };
-  })
-);
-
-const freq = {};
-MEMBERS.forEach(m => m.top10.forEach(s => { freq[s] = (freq[s]||0)+1; }));
-const sharedStrengths = Object.entries(freq).sort((a,b)=>b[1]-a[1]).filter(([,n])=>n>=3)
-  .map(([s,n]) => {
-    const domain = DOMAIN_MAP[s] || "Unknown";
-    return { strength:s, count:n, domain,
-      color:(DOMAIN_META[domain]||{color:"#888"}).color,
-      who:MEMBERS.filter(m=>m.top10.includes(s)).map(m=>m.first) };
-  });
 
 const MOST_LIKELY = [
   { question:"Who is most likely to survive prison?",               emoji:"🔒", person:"Richard Yates",   color:"#d4763b", reason:"Learner, Achiever, Consistency, Restorative, and Self-Assurance. He would study the environment, establish a routine immediately, fix problems before they escalate, and his Self-Assurance means he would not be rattled or taken advantage of. He would be out of trouble and probably running the library within a week." },
@@ -107,234 +127,159 @@ const MOST_LIKELY = [
   { question:"Who is most likely to make a world-changing discovery?", emoji:"🔬", person:"Nick Loyacona", color:"#888888", reason:"Analytical, Learner, Input, Developer, Discipline. He would spend years quietly collecting data that nobody thought to connect, then one day hand everyone a conclusion that seems obvious in hindsight. He would also make sure his whole team got credit." },
 ];
 
-const BG="#0f1117", CARD="#161820", BORDER="#2a2d3a", C="#f0ece4";
+const BG="#0f1117",CARD="#161820",BORDER="#2a2d3a",C="#f0ece4";
+function Card({children,style={}}){ return <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:"20px 22px",...style}}>{children}</div>; }
+function SLabel({children}){ return <div style={{fontSize:10,letterSpacing:"0.25em",textTransform:"uppercase",color:"#555",fontFamily:"monospace",marginBottom:12}}>{children}</div>; }
+function Tag({children,color}){ return <span style={{display:"inline-block",padding:"2px 8px",borderRadius:4,fontSize:11,background:color+"22",color,border:`1px solid ${color}44`,fontFamily:"monospace"}}>{children}</span>; }
+function ActiveShape({cx,cy,innerRadius,outerRadius,startAngle,endAngle,fill}){ return <g><Sector cx={cx} cy={cy} innerRadius={innerRadius-5} outerRadius={outerRadius+10} startAngle={startAngle} endAngle={endAngle} fill={fill} style={{filter:`drop-shadow(0 4px 16px ${fill}77)`}}/></g>; }
+function heatColor(n){ if(n===0)return{bg:"#1a1c26",text:"#333"}; if(n===1)return{bg:"#1e2d3a",text:"#4a7a9b"}; if(n===2)return{bg:"#1e3630",text:"#4a9b7a"}; if(n===3)return{bg:"#2d3020",text:"#b0b040"}; if(n===4)return{bg:"#3a2a18",text:"#d4903b"}; return{bg:"#3a2020",text:"#d46060"}; }
 
-function Card({ children, style={} }) {
-  return <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:12, padding:"20px 22px", ...style }}>{children}</div>;
-}
-function SLabel({ children }) {
-  return <div style={{ fontSize:10, letterSpacing:"0.25em", textTransform:"uppercase", color:"#555", fontFamily:"monospace", marginBottom:12 }}>{children}</div>;
-}
-function Tag({ children, color }) {
-  return <span style={{ display:"inline-block", padding:"2px 8px", borderRadius:4, fontSize:11, background:color+"22", color, border:`1px solid ${color}44`, fontFamily:"monospace" }}>{children}</span>;
-}
-function ActiveShape({ cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill }) {
-  return (
-    <g>
-      <Sector cx={cx} cy={cy} innerRadius={innerRadius-5} outerRadius={outerRadius+10}
-        startAngle={startAngle} endAngle={endAngle} fill={fill}
-        style={{ filter:`drop-shadow(0 4px 16px ${fill}77)` }} />
-    </g>
-  );
-}
-function heatColor(n) {
-  if (n===0) return { bg:"#1a1c26", text:"#333" };
-  if (n===1) return { bg:"#1e2d3a", text:"#4a7a9b" };
-  if (n===2) return { bg:"#1e3630", text:"#4a9b7a" };
-  if (n===3) return { bg:"#2d3020", text:"#b0b040" };
-  if (n===4) return { bg:"#3a2a18", text:"#d4903b" };
-  return       { bg:"#3a2020", text:"#d46060" };
-}
+const TABS = ["Team Profile","Overview","Overlap Heatmap","Radar Chart","Most Likely To"];
 
-const TABS = ["Overview","Overlap Heatmap","Radar Chart","Most Likely To"];
+function Dashboard(){
+  const [tab,setTab]                   = useState("Team Profile");
+  const [activeSlice,setActiveSlice]   = useState(null);
+  const [activeShared,setActiveShared] = useState(null);
+  const [hoverCell,setHoverCell]       = useState(null);
+  const [clickedCell,setClickedCell]   = useState(null);
+  const [visible,setVisible]           = useState(new Set(MEMBERS.map(m=>m.first)));
+  const [revealed,setRevealed]         = useState(new Set());
 
-function Dashboard() {
-  const [tab, setTab]                   = useState("Overview");
-  const [activeSlice, setActiveSlice]   = useState(null);
-  const [activeShared, setActiveShared] = useState(null);
-  const [hoverCell, setHoverCell]       = useState(null);
-  const [visible, setVisible]           = useState(new Set(MEMBERS.map(m=>m.first)));
-  const [revealed, setRevealed]         = useState(new Set());
+  const activeDomain = activeSlice!==null ? domainData[activeSlice] : null;
 
-  const activeDomain = activeSlice !== null ? domainData[activeSlice] : null;
+  function toggleMember(first){ setVisible(prev=>{ const next=new Set(prev); if(next.has(first)){if(next.size>1)next.delete(first);}else next.add(first); return next; }); }
+  function toggleReveal(i){ setRevealed(prev=>{ const next=new Set(prev); next.has(i)?next.delete(i):next.add(i); return next; }); }
+  function handleCellClick(i,j){ if(i===j)return; const key=pairKey(MEMBERS[i].first,MEMBERS[j].first); const narrative=PAIR_NARRATIVES[key]; if(!narrative)return; setClickedCell({row:i,col:j,a:MEMBERS[i].first,b:MEMBERS[j].first,aColor:MEMBERS[i].color,bColor:MEMBERS[j].color,...narrative,...overlap[i][j]}); }
 
-  function toggleMember(first) {
-    setVisible(prev => {
-      const next = new Set(prev);
-      if (next.has(first)) { if (next.size > 1) next.delete(first); }
-      else next.add(first);
-      return next;
-    });
-  }
-  function toggleReveal(i) {
-    setRevealed(prev => {
-      const next = new Set(prev);
-      next.has(i) ? next.delete(i) : next.add(i);
-      return next;
-    });
-  }
+  const activeNarrative = clickedCell ? PAIR_NARRATIVES[pairKey(clickedCell.a,clickedCell.b)] : null;
 
   return (
-    <div style={{ fontFamily:"Georgia,serif", background:BG, minHeight:"100vh", color:C, padding:"36px 24px", maxWidth:1000, margin:"0 auto" }}>
-
-      <div style={{ marginBottom:28 }}>
-        <div style={{ fontSize:10, letterSpacing:"0.3em", fontFamily:"monospace", color:"#555", marginBottom:8 }}>
-          GRANTS TEAM · CLIFTONSTRENGTHS 2026
-        </div>
-        <h1 style={{ margin:0, fontSize:"clamp(24px,4vw,40px)", fontWeight:"normal", letterSpacing:"-0.02em", lineHeight:1.1 }}>
-          Team Strengths Dashboard
-        </h1>
-        <p style={{ color:"#555", fontSize:13, marginTop:8, fontFamily:"monospace" }}>
-          9 members · 90 top-10 themes · 4 domains
-        </p>
+    <div style={{fontFamily:"Georgia,serif",background:BG,minHeight:"100vh",color:C,padding:"36px 24px",maxWidth:1000,margin:"0 auto"}}>
+      <div style={{marginBottom:28}}>
+        <div style={{fontSize:10,letterSpacing:"0.3em",fontFamily:"monospace",color:"#555",marginBottom:8}}>GRANTS TEAM · CLIFTONSTRENGTHS 2026</div>
+        <h1 style={{margin:0,fontSize:"clamp(24px,4vw,40px)",fontWeight:"normal",letterSpacing:"-0.02em",lineHeight:1.1}}>Team Strengths Dashboard</h1>
+        <p style={{color:"#555",fontSize:13,marginTop:8,fontFamily:"monospace"}}>9 members · 90 top-10 themes · 4 domains</p>
       </div>
 
-      <div style={{ display:"flex", gap:4, marginBottom:24, borderBottom:`1px solid ${BORDER}` }}>
-        {TABS.map(t => (
-          <button key={t} onClick={()=>setTab(t)} style={{
-            background:"none", border:"none", cursor:"pointer", padding:"8px 18px",
-            fontSize:13, fontFamily:"Georgia,serif", color:tab===t ? C : "#555",
-            borderBottom:tab===t ? `2px solid ${C}` : "2px solid transparent",
-            marginBottom:-1, transition:"color 0.15s",
-          }}>{t}</button>
+      <div style={{display:"flex",gap:4,marginBottom:24,borderBottom:`1px solid ${BORDER}`,overflowX:"auto"}}>
+        {TABS.map(t=>(
+          <button key={t} onClick={()=>setTab(t)} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 18px",fontSize:13,fontFamily:"Georgia,serif",color:tab===t?C:"#555",borderBottom:tab===t?`2px solid ${C}`:"2px solid transparent",marginBottom:-1,transition:"color 0.15s",whiteSpace:"nowrap"}}>{t}</button>
         ))}
       </div>
 
-      {tab==="Overview" && (
+      {/* ══ TEAM PROFILE ══ */}
+      {tab==="Team Profile" && (
         <div>
-          <Card style={{ marginBottom:16 }}>
-            <SLabel>Domain Distribution</SLabel>
-            <div style={{ display:"flex", alignItems:"center", gap:32, flexWrap:"wrap" }}>
-              <div style={{ position:"relative", width:260, height:260, flexShrink:0 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={domainData} cx="50%" cy="50%" innerRadius={80} outerRadius={115}
-                      dataKey="count" activeIndex={activeSlice} activeShape={ActiveShape}
-                      onMouseEnter={(_,i)=>setActiveSlice(i)} onMouseLeave={()=>setActiveSlice(null)}
-                      startAngle={90} endAngle={-270} stroke="none">
-                      {domainData.map((d,i)=>(
-                        <Cell key={d.name} fill={d.color}
-                          opacity={activeSlice===null||activeSlice===i ? 1 : 0.3}
-                          style={{ cursor:"pointer", transition:"opacity 0.2s" }} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", textAlign:"center", pointerEvents:"none" }}>
-                  {activeDomain ? (
-                    <div>
-                      <div style={{ fontSize:32, fontWeight:"bold", color:activeDomain.color, lineHeight:1 }}>
-                        {Math.round(activeDomain.count/TOTAL*100)}%
-                      </div>
-                      <div style={{ fontSize:11, color:"#666", fontFamily:"monospace", marginTop:4 }}>{activeDomain.short}</div>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize:11, color:"#444", fontFamily:"monospace", lineHeight:1.8 }}>hover<br/>a slice</div>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ flex:1, minWidth:200, display:"flex", flexDirection:"column", gap:14 }}>
-                {domainData.map((d,i)=>(
-                  <div key={d.name} onMouseEnter={()=>setActiveSlice(i)} onMouseLeave={()=>setActiveSlice(null)}
-                    style={{ cursor:"pointer", transition:"transform 0.15s", transform:activeSlice===i ? "translateX(4px)" : "none" }}>
-                    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
-                      <span style={{ fontSize:13, color:activeSlice===i ? d.color : "#aaa" }}>{d.name}</span>
-                      <span style={{ fontSize:13, fontFamily:"monospace", color:"#666" }}>{d.count} <span style={{ color:"#444", fontSize:11 }}>/ {TOTAL}</span></span>
-                    </div>
-                    <div style={{ background:"#1e2030", borderRadius:4, height:6, overflow:"hidden" }}>
-                      <div style={{ width:`${(d.count/TOTAL)*100}%`, height:"100%", background:d.color, borderRadius:4,
-                        opacity:activeSlice===null||activeSlice===i ? 1 : 0.3, transition:"opacity 0.2s" }} />
-                    </div>
+          <div style={{marginBottom:24}}>
+            <div style={{fontSize:10,letterSpacing:"0.25em",textTransform:"uppercase",color:"#555",fontFamily:"monospace",marginBottom:4}}>GRANTS TEAM · 2026</div>
+            <h2 style={{fontWeight:"normal",fontSize:28,letterSpacing:"-0.01em",color:C}}>Team DNA</h2>
+            <p style={{color:"#555",fontSize:12,marginTop:6,fontFamily:"monospace"}}>A profile of who we are as a unit — our strengths, our blind spots, and what makes us work.</p>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(440px,1fr))",gap:16}}>
+            {TEAM_PROFILE.map((section,i)=>{
+              const accents=["#4a9b6f","#3a7db5","#d4763b","#7c5cbf"];
+              const color=accents[i];
+              return (
+                <Card key={section.heading} style={{borderTop:`3px solid ${color}`}}>
+                  <div style={{fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase",color,fontFamily:"monospace",marginBottom:10}}>{section.heading}</div>
+                  <p style={{fontSize:13,lineHeight:1.8,color:"#c8c4bc"}}>{section.text}</p>
+                </Card>
+              );
+            })}
+          </div>
+          <Card style={{marginTop:16,borderTop:`3px solid #2a2d3a`}}>
+            <SLabel>Team Domain Snapshot</SLabel>
+            <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+              {domainData.map(d=>(
+                <div key={d.name} style={{flex:1,minWidth:160,background:"#0f1117",borderRadius:8,padding:"12px 14px",border:`1px solid ${BORDER}`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8}}>
+                    <span style={{fontSize:12,color:d.color}}>{d.name}</span>
+                    <span style={{fontSize:20,fontWeight:"bold",color:d.color,fontFamily:"monospace"}}>{d.count}</span>
                   </div>
-                ))}
-              </div>
-
-              <div style={{ width:200, transition:"opacity 0.2s", opacity:activeDomain ? 1 : 0 }}>
-                {activeDomain && (
-                  <div>
-                    <div style={{ fontSize:10, color:activeDomain.color, fontFamily:"monospace", letterSpacing:"0.15em", marginBottom:10 }}>
-                      {activeDomain.short} PER MEMBER
-                    </div>
-                    {[...memberDomains].sort((a,b)=>b.dc[activeDomain.name]-a.dc[activeDomain.name]).map(m=>(
-                      <div key={m.name} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:7 }}>
-                        <span style={{ fontSize:11, color:"#666", width:58, flexShrink:0 }}>{m.first}</span>
-                        <div style={{ flex:1, background:"#1e2030", borderRadius:3, height:5 }}>
-                          <div style={{ width:`${(m.dc[activeDomain.name]/5)*100}%`, height:"100%", background:activeDomain.color, borderRadius:3 }} />
-                        </div>
-                        <span style={{ fontSize:11, fontFamily:"monospace", color:"#555", width:12, textAlign:"right" }}>{m.dc[activeDomain.name]}</span>
-                      </div>
-                    ))}
+                  <div style={{background:"#1e2030",borderRadius:3,height:4}}>
+                    <div style={{width:`${(d.count/TOTAL)*100}%`,height:"100%",background:d.color,borderRadius:3}}/>
                   </div>
-                )}
-              </div>
-            </div>
-          </Card>
-
-          <Card style={{ marginBottom:16 }}>
-            <SLabel>Most Shared Strengths — 3+ peoples top 10</SLabel>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))", gap:10 }}>
-              {sharedStrengths.map(s=>(
-                <div key={s.strength} onMouseEnter={()=>setActiveShared(s.strength)} onMouseLeave={()=>setActiveShared(null)}
-                  style={{ background:activeShared===s.strength ? "#1e2030" : "#0f1117",
-                    border:`1px solid ${activeShared===s.strength ? s.color+"66" : BORDER}`,
-                    borderLeft:`3px solid ${s.color}`, borderRadius:8, padding:"10px 12px", transition:"all 0.15s", cursor:"default" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:6 }}>
-                    <span style={{ fontSize:13, fontWeight:"bold", color:s.color }}>{s.strength}</span>
-                    <span style={{ fontSize:18, fontWeight:"bold", color:s.color, fontFamily:"monospace" }}>{s.count}</span>
-                  </div>
-                  <Tag color={s.color}>{(DOMAIN_META[s.domain]||{short:"?"}).short} · {s.domain.split(" ")[0]}</Tag>
-                  {activeShared===s.strength && (
-                    <div style={{ marginTop:8, display:"flex", flexWrap:"wrap", gap:4 }}>
-                      {s.who.map(w=>(
-                        <span key={w} style={{ fontSize:10, color:"#888", fontFamily:"monospace", background:"#1a1c28", padding:"2px 6px", borderRadius:3 }}>{w}</span>
-                      ))}
-                    </div>
-                  )}
-                  <div style={{ display:"flex", gap:4, marginTop:8 }}>
-                    {[...Array(9)].map((_,i)=>(
-                      <div key={i} style={{ width:8, height:8, borderRadius:2, flexShrink:0,
-                        background:i<s.count ? s.color : "#2a2d3a", opacity:i<s.count ? 1 : 0.4 }} />
-                    ))}
-                  </div>
+                  <div style={{fontSize:10,color:"#444",fontFamily:"monospace",marginTop:6}}>{Math.round((d.count/TOTAL)*100)}% of all themes</div>
                 </div>
               ))}
             </div>
           </Card>
+        </div>
+      )}
 
+      {/* ══ OVERVIEW ══ */}
+      {tab==="Overview" && (
+        <div>
+          <Card style={{marginBottom:16}}>
+            <SLabel>Domain Distribution</SLabel>
+            <div style={{display:"flex",alignItems:"center",gap:32,flexWrap:"wrap"}}>
+              <div style={{position:"relative",width:260,height:260,flexShrink:0}}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={domainData} cx="50%" cy="50%" innerRadius={80} outerRadius={115} dataKey="count" activeIndex={activeSlice} activeShape={ActiveShape} onMouseEnter={(_,i)=>setActiveSlice(i)} onMouseLeave={()=>setActiveSlice(null)} startAngle={90} endAngle={-270} stroke="none">
+                      {domainData.map((d,i)=>(<Cell key={d.name} fill={d.color} opacity={activeSlice===null||activeSlice===i?1:0.3} style={{cursor:"pointer",transition:"opacity 0.2s"}}/>))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none"}}>
+                  {activeDomain?(<div><div style={{fontSize:32,fontWeight:"bold",color:activeDomain.color,lineHeight:1}}>{Math.round(activeDomain.count/TOTAL*100)}%</div><div style={{fontSize:11,color:"#666",fontFamily:"monospace",marginTop:4}}>{activeDomain.short}</div></div>):(<div style={{fontSize:11,color:"#444",fontFamily:"monospace",lineHeight:1.8}}>hover<br/>a slice</div>)}
+                </div>
+              </div>
+              <div style={{flex:1,minWidth:200,display:"flex",flexDirection:"column",gap:14}}>
+                {domainData.map((d,i)=>(
+                  <div key={d.name} onMouseEnter={()=>setActiveSlice(i)} onMouseLeave={()=>setActiveSlice(null)} style={{cursor:"pointer",transition:"transform 0.15s",transform:activeSlice===i?"translateX(4px)":"none"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                      <span style={{fontSize:13,color:activeSlice===i?d.color:"#aaa"}}>{d.name}</span>
+                      <span style={{fontSize:13,fontFamily:"monospace",color:"#666"}}>{d.count} <span style={{color:"#444",fontSize:11}}>/ {TOTAL}</span></span>
+                    </div>
+                    <div style={{background:"#1e2030",borderRadius:4,height:6,overflow:"hidden"}}>
+                      <div style={{width:`${(d.count/TOTAL)*100}%`,height:"100%",background:d.color,borderRadius:4,opacity:activeSlice===null||activeSlice===i?1:0.3,transition:"opacity 0.2s"}}/>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{width:200,transition:"opacity 0.2s",opacity:activeDomain?1:0}}>
+                {activeDomain&&(<div><div style={{fontSize:10,color:activeDomain.color,fontFamily:"monospace",letterSpacing:"0.15em",marginBottom:10}}>{activeDomain.short} PER MEMBER</div>{[...memberDomains].sort((a,b)=>b.dc[activeDomain.name]-a.dc[activeDomain.name]).map(m=>(<div key={m.name} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}><span style={{fontSize:11,color:"#666",width:58,flexShrink:0}}>{m.first}</span><div style={{flex:1,background:"#1e2030",borderRadius:3,height:5}}><div style={{width:`${(m.dc[activeDomain.name]/5)*100}%`,height:"100%",background:activeDomain.color,borderRadius:3}}/></div><span style={{fontSize:11,fontFamily:"monospace",color:"#555",width:12,textAlign:"right"}}>{m.dc[activeDomain.name]}</span></div>))}</div>)}
+              </div>
+            </div>
+          </Card>
+          <Card style={{marginBottom:16}}>
+            <SLabel>Most Shared Strengths — 3+ peoples top 10</SLabel>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}}>
+              {sharedStrengths.map(s=>(
+                <div key={s.strength} onMouseEnter={()=>setActiveShared(s.strength)} onMouseLeave={()=>setActiveShared(null)} style={{background:activeShared===s.strength?"#1e2030":"#0f1117",border:`1px solid ${activeShared===s.strength?s.color+"66":BORDER}`,borderLeft:`3px solid ${s.color}`,borderRadius:8,padding:"10px 12px",transition:"all 0.15s",cursor:"default"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+                    <span style={{fontSize:13,fontWeight:"bold",color:s.color}}>{s.strength}</span>
+                    <span style={{fontSize:18,fontWeight:"bold",color:s.color,fontFamily:"monospace"}}>{s.count}</span>
+                  </div>
+                  <Tag color={s.color}>{(DOMAIN_META[s.domain]||{short:"?"}).short} · {s.domain.split(" ")[0]}</Tag>
+                  {activeShared===s.strength&&(<div style={{marginTop:8,display:"flex",flexWrap:"wrap",gap:4}}>{s.who.map(w=>(<span key={w} style={{fontSize:10,color:"#888",fontFamily:"monospace",background:"#1a1c28",padding:"2px 6px",borderRadius:3}}>{w}</span>))}</div>)}
+                  <div style={{display:"flex",gap:4,marginTop:8}}>{[...Array(9)].map((_,i)=>(<div key={i} style={{width:8,height:8,borderRadius:2,flexShrink:0,background:i<s.count?s.color:"#2a2d3a",opacity:i<s.count?1:0.4}}/>))}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
           <Card>
             <SLabel>Individual Domain Profiles</SLabel>
-            <div style={{ overflowX:"auto" }}>
-              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
-                <thead>
-                  <tr>
-                    <th style={{ textAlign:"left", padding:"6px 10px", color:"#555", fontFamily:"monospace", fontWeight:"normal", fontSize:10, letterSpacing:"0.1em" }}>MEMBER</th>
-                    {Object.entries(DOMAIN_META).map(([d,meta])=>(
-                      <th key={d} style={{ textAlign:"center", padding:"6px 10px", color:meta.color, fontFamily:"monospace", fontWeight:"normal", fontSize:10, letterSpacing:"0.1em" }}>{meta.short}</th>
-                    ))}
-                    <th style={{ textAlign:"left", padding:"6px 10px", color:"#555", fontFamily:"monospace", fontWeight:"normal", fontSize:10 }}>DOMINANT</th>
-                  </tr>
-                </thead>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                <thead><tr>
+                  <th style={{textAlign:"left",padding:"6px 10px",color:"#555",fontFamily:"monospace",fontWeight:"normal",fontSize:10,letterSpacing:"0.1em"}}>MEMBER</th>
+                  {Object.entries(DOMAIN_META).map(([d,meta])=>(<th key={d} style={{textAlign:"center",padding:"6px 10px",color:meta.color,fontFamily:"monospace",fontWeight:"normal",fontSize:10,letterSpacing:"0.1em"}}>{meta.short}</th>))}
+                  <th style={{textAlign:"left",padding:"6px 10px",color:"#555",fontFamily:"monospace",fontWeight:"normal",fontSize:10}}>DOMINANT</th>
+                </tr></thead>
                 <tbody>
-                  {memberDomains.map((m,i)=>{
-                    const dominant = Object.entries(m.dc).sort((a,b)=>b[1]-a[1])[0][0];
-                    return (
-                      <tr key={m.name} style={{ background:i%2===0 ? "#0f1117" : "transparent" }}>
-                        <td style={{ padding:"7px 10px", color:"#ccc", fontWeight:"bold" }}>{m.name}</td>
-                        {Object.entries(DOMAIN_META).map(([d,meta])=>{
-                          const n=m.dc[d]; const isDom=d===dominant;
-                          return (
-                            <td key={d} style={{ textAlign:"center", padding:"7px 10px" }}>
-                              <span style={{ display:"inline-block", minWidth:28, padding:"2px 6px", borderRadius:4,
-                                fontFamily:"monospace", fontSize:13, fontWeight:isDom ? "bold" : "normal",
-                                color:isDom ? meta.color : "#888", background:isDom ? meta.color+"22" : "transparent" }}>{n}</span>
-                            </td>
-                          );
-                        })}
-                        <td style={{ padding:"7px 10px" }}>
-                          <Tag color={DOMAIN_META[dominant].color}>{DOMAIN_META[dominant].short} · {dominant}</Tag>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  <tr style={{ borderTop:`1px solid ${BORDER}` }}>
-                    <td style={{ padding:"8px 10px", color:"#555", fontFamily:"monospace", fontSize:10 }}>TEAM TOTAL</td>
-                    {Object.entries(DOMAIN_META).map(([d,meta])=>(
-                      <td key={d} style={{ textAlign:"center", padding:"8px 10px" }}>
-                        <span style={{ fontFamily:"monospace", fontSize:13, fontWeight:"bold", color:meta.color }}>{domainTotals[d]}</span>
-                      </td>
-                    ))}
-                    <td />
+                  {memberDomains.map((m,i)=>{ const dominant=Object.entries(m.dc).sort((a,b)=>b[1]-a[1])[0][0]; return (
+                    <tr key={m.name} style={{background:i%2===0?"#0f1117":"transparent"}}>
+                      <td style={{padding:"7px 10px",color:"#ccc",fontWeight:"bold"}}>{m.name}</td>
+                      {Object.entries(DOMAIN_META).map(([d,meta])=>{ const n=m.dc[d]; const isDom=d===dominant; return (<td key={d} style={{textAlign:"center",padding:"7px 10px"}}><span style={{display:"inline-block",minWidth:28,padding:"2px 6px",borderRadius:4,fontFamily:"monospace",fontSize:13,fontWeight:isDom?"bold":"normal",color:isDom?meta.color:"#888",background:isDom?meta.color+"22":"transparent"}}>{n}</span></td>); })}
+                      <td style={{padding:"7px 10px"}}><Tag color={DOMAIN_META[dominant].color}>{DOMAIN_META[dominant].short} · {dominant}</Tag></td>
+                    </tr>
+                  ); })}
+                  <tr style={{borderTop:`1px solid ${BORDER}`}}>
+                    <td style={{padding:"8px 10px",color:"#555",fontFamily:"monospace",fontSize:10}}>TEAM TOTAL</td>
+                    {Object.entries(DOMAIN_META).map(([d,meta])=>(<td key={d} style={{textAlign:"center",padding:"8px 10px"}}><span style={{fontFamily:"monospace",fontSize:13,fontWeight:"bold",color:meta.color}}>{domainTotals[d]}</span></td>))}
+                    <td/>
                   </tr>
                 </tbody>
               </table>
@@ -343,225 +288,154 @@ function Dashboard() {
         </div>
       )}
 
+      {/* ══ HEATMAP ══ */}
       {tab==="Overlap Heatmap" && (
-        <Card>
-          <SLabel>Shared Top-10 Strengths Between Any Two Members</SLabel>
-          <p style={{ fontSize:12, color:"#555", marginTop:-4, marginBottom:20, lineHeight:1.6 }}>
-            Each cell shows how many top-10 strengths two people share. Hover to see exactly which ones.
-          </p>
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:20, flexWrap:"wrap" }}>
-            <span style={{ fontSize:11, color:"#555", fontFamily:"monospace" }}>shared:</span>
-            {[0,1,2,3,4,5].map(n=>{
-              const {bg,text}=heatColor(n);
-              return <div key={n} style={{ width:28, height:28, borderRadius:5, background:bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, color:text, fontFamily:"monospace", fontWeight:"bold" }}>{n}</div>;
-            })}
-          </div>
-          <div style={{ overflowX:"auto" }}>
-            <table style={{ borderCollapse:"separate", borderSpacing:4 }}>
-              <thead>
-                <tr>
-                  <th style={{ width:72 }} />
-                  {MEMBERS.map(m=>(
-                    <th key={m.name} style={{ padding:"0 2px", width:48 }}>
-                      <div style={{ fontSize:11, color:m.color, fontFamily:"monospace", writingMode:"vertical-rl", transform:"rotate(180deg)", height:72, display:"flex", alignItems:"center" }}>{m.first}</div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {MEMBERS.map((rowM,i)=>(
-                  <tr key={rowM.name}>
-                    <td style={{ paddingRight:10, textAlign:"right" }}>
-                      <span style={{ fontSize:11, color:rowM.color, fontFamily:"monospace" }}>{rowM.first}</span>
-                    </td>
-                    {MEMBERS.map((colM,j)=>{
-                      const isSelf=i===j;
-                      const cell=overlap[i][j];
-                      const isHov=hoverCell && hoverCell.row===i && hoverCell.col===j;
-                      const {bg,text}=isSelf ? {bg:"#1e2030",text:"#333"} : heatColor(cell.count);
-                      return (
-                        <td key={colM.name} style={{ padding:0 }}
-                          onMouseEnter={()=>!isSelf && setHoverCell({row:i,col:j,...cell,a:rowM.first,b:colM.first})}
-                          onMouseLeave={()=>setHoverCell(null)}>
-                          <div style={{ width:46, height:46, borderRadius:7, background:bg,
-                            border:isHov ? `2px solid ${rowM.color}` : "2px solid transparent",
-                            display:"flex", alignItems:"center", justifyContent:"center",
-                            cursor:isSelf ? "default" : "pointer",
-                            transition:"all 0.12s", transform:isHov ? "scale(1.12)" : "scale(1)" }}>
-                            {isSelf
-                              ? <div style={{ width:14, height:2, background:"#2a2d3a", borderRadius:1 }} />
-                              : <span style={{ fontSize:16, fontFamily:"monospace", fontWeight:"bold", color:text }}>{cell.count}</span>
-                            }
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div style={{ marginTop:24, minHeight:72 }}>
-            {hoverCell ? (
-              <div style={{ background:"#0f1117", borderRadius:10, padding:"16px 20px", border:`1px solid ${BORDER}` }}>
-                <div style={{ fontSize:13, marginBottom:10 }}>
-                  <span style={{ color:MEMBERS.find(m=>m.first===hoverCell.a).color, fontWeight:"bold" }}>{hoverCell.a}</span>
-                  <span style={{ color:"#555" }}> and </span>
-                  <span style={{ color:MEMBERS.find(m=>m.first===hoverCell.b).color, fontWeight:"bold" }}>{hoverCell.b}</span>
-                  <span style={{ color:"#666", fontSize:12 }}> — {hoverCell.shared.length} shared strength{hoverCell.shared.length!==1?"s":""}</span>
-                </div>
-                {hoverCell.shared.length>0
-                  ? <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                      {hoverCell.shared.map(s=>{
-                        const domain=DOMAIN_MAP[s]||"Unknown";
-                        return <Tag key={s} color={(DOMAIN_META[domain]||{color:"#888"}).color}>{s}</Tag>;
-                      })}
-                    </div>
-                  : <span style={{ fontSize:12, color:"#444", fontFamily:"monospace" }}>No shared strengths in top 10</span>
-                }
-              </div>
-            ) : (
-              <div style={{ textAlign:"center", padding:"20px 0", color:"#2a2d3a", fontFamily:"monospace", fontSize:12 }}>
-                hover any cell to see shared strengths
-              </div>
-            )}
-          </div>
-        </Card>
-      )}
-
-      {tab==="Radar Chart" && (
         <div>
-          <Card style={{ marginBottom:16 }}>
-            <SLabel>Team Average</SLabel>
-            <div style={{ display:"flex", alignItems:"center", gap:40, flexWrap:"wrap" }}>
-              <ResponsiveContainer width={260} height={240}>
-                <RadarChart data={DOMAINS.map(d=>({ domain:DOMAIN_META[d].short, avg:Math.round((domainTotals[d]/9)*10)/10 }))}
-                  margin={{ top:10, right:20, bottom:10, left:20 }}>
-                  <PolarGrid stroke="#2a2d3a" />
-                  <PolarAngleAxis dataKey="domain" tick={{ fill:"#888", fontSize:13, fontFamily:"monospace" }} />
-                  <PolarRadiusAxis domain={[0,5]} tick={false} axisLine={false} />
-                  <Radar dataKey="avg" stroke={C} fill={C} fillOpacity={0.1} dot={{ r:4, fill:C, strokeWidth:0 }} />
-                </RadarChart>
-              </ResponsiveContainer>
-              <div style={{ flex:1, minWidth:200 }}>
-                <p style={{ fontSize:12, color:"#555", marginBottom:16, lineHeight:1.7 }}>
-                  Average top-10 themes per domain across all 9 members. The team skews toward Relationship Building with a notable Influencing gap.
-                </p>
-                {DOMAINS.map(d=>(
-                  <div key={d} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
-                    <div style={{ width:8, height:8, borderRadius:2, background:DOMAIN_META[d].color, flexShrink:0 }} />
-                    <span style={{ fontSize:12, color:"#777", width:170 }}>{d}</span>
-                    <div style={{ flex:1, background:"#1e2030", borderRadius:3, height:5 }}>
-                      <div style={{ width:`${(domainTotals[d]/TOTAL)*100}%`, height:"100%", background:DOMAIN_META[d].color, borderRadius:3 }} />
-                    </div>
-                    <span style={{ fontSize:12, fontFamily:"monospace", color:"#555", width:40, textAlign:"right" }}>
-                      {(domainTotals[d]/9).toFixed(1)}
-                    </span>
-                  </div>
-                ))}
-              </div>
+          <Card style={{marginBottom:16}}>
+            <SLabel>Shared Top-10 Strengths Between Any Two Members</SLabel>
+            <p style={{fontSize:12,color:"#555",marginTop:-4,marginBottom:20,lineHeight:1.6}}>
+              Each cell shows how many top-10 strengths two people share. Hover to preview, click to read the full pairing narrative.
+            </p>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20,flexWrap:"wrap"}}>
+              <span style={{fontSize:11,color:"#555",fontFamily:"monospace"}}>shared:</span>
+              {[0,1,2,3,4,5].map(n=>{ const{bg,text}=heatColor(n); return <div key={n} style={{width:28,height:28,borderRadius:5,background:bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:text,fontFamily:"monospace",fontWeight:"bold"}}>{n}</div>; })}
+            </div>
+            <div style={{overflowX:"auto"}}>
+              <table style={{borderCollapse:"separate",borderSpacing:4}}>
+                <thead><tr>
+                  <th style={{width:72}}/>
+                  {MEMBERS.map(m=>(<th key={m.name} style={{padding:"0 2px",width:48}}><div style={{fontSize:11,color:m.color,fontFamily:"monospace",writingMode:"vertical-rl",transform:"rotate(180deg)",height:72,display:"flex",alignItems:"center"}}>{m.first}</div></th>))}
+                </tr></thead>
+                <tbody>
+                  {MEMBERS.map((rowM,i)=>(
+                    <tr key={rowM.name}>
+                      <td style={{paddingRight:10,textAlign:"right"}}><span style={{fontSize:11,color:rowM.color,fontFamily:"monospace"}}>{rowM.first}</span></td>
+                      {MEMBERS.map((colM,j)=>{
+                        const isSelf=i===j;
+                        const cell=overlap[i][j];
+                        const isHov=hoverCell&&hoverCell.row===i&&hoverCell.col===j;
+                        const isClicked=clickedCell&&clickedCell.row===i&&clickedCell.col===j;
+                        const{bg,text}=isSelf?{bg:"#1e2030",text:"#333"}:heatColor(cell.count);
+                        return (
+                          <td key={colM.name} style={{padding:0}}
+                            onMouseEnter={()=>!isSelf&&setHoverCell({row:i,col:j,...cell,a:rowM.first,b:colM.first})}
+                            onMouseLeave={()=>setHoverCell(null)}
+                            onClick={()=>handleCellClick(i,j)}>
+                            <div style={{width:46,height:46,borderRadius:7,background:bg,
+                              border:isClicked?`2px solid ${rowM.color}`:isHov?`2px solid ${rowM.color}88`:"2px solid transparent",
+                              display:"flex",alignItems:"center",justifyContent:"center",
+                              cursor:isSelf?"default":"pointer",
+                              transition:"all 0.12s",transform:isHov||isClicked?"scale(1.12)":"scale(1)"}}>
+                              {isSelf?<div style={{width:14,height:2,background:"#2a2d3a",borderRadius:1}}/>:<span style={{fontSize:16,fontFamily:"monospace",fontWeight:"bold",color:text}}>{cell.count}</span>}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </Card>
 
-          <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:20 }}>
-            {MEMBERS.map(m=>{
-              const on=visible.has(m.first);
-              return (
-                <button key={m.first} onClick={()=>toggleMember(m.first)} style={{
-                  background:on ? m.color+"22" : "#161820",
-                  border:`1px solid ${on ? m.color : BORDER}`,
-                  borderRadius:20, padding:"5px 16px", cursor:"pointer",
-                  fontSize:12, color:on ? m.color : "#555", transition:"all 0.15s",
-                }}>{m.first}</button>
-              );
-            })}
-            <button onClick={()=>setVisible(new Set(MEMBERS.map(m=>m.first)))}
-              style={{ background:"none", border:`1px solid ${BORDER}`, borderRadius:20, padding:"5px 14px",
-                cursor:"pointer", fontSize:11, color:"#555", fontFamily:"monospace", letterSpacing:"0.1em" }}>ALL</button>
-          </div>
-
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(270px, 1fr))", gap:14 }}>
-            {MEMBERS.filter(m=>visible.has(m.first)).map(m=>{
-              const member=memberDomains.find(x=>x.first===m.first);
-              const dominant=Object.entries(member.dc).sort((a,b)=>b[1]-a[1])[0][0];
-              const radarData=DOMAINS.map(d=>({ domain:DOMAIN_META[d].short, value:member.dc[d] }));
-              return (
-                <Card key={m.first}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:2 }}>
-                    <span style={{ fontSize:15, color:m.color, fontWeight:"bold" }}>{m.first}</span>
-                    <Tag color={DOMAIN_META[dominant].color}>{DOMAIN_META[dominant].short}</Tag>
+          {/* Narrative panel */}
+          <div style={{minHeight:80}}>
+            {clickedCell&&activeNarrative ? (
+              <Card className="slide-in" style={{borderTop:`3px solid ${clickedCell.aColor}`}}>
+                <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16,flexWrap:"wrap"}}>
+                  <span style={{fontSize:18,fontWeight:"bold",color:clickedCell.aColor}}>{clickedCell.a}</span>
+                  <span style={{color:"#444",fontSize:16}}>+</span>
+                  <span style={{fontSize:18,fontWeight:"bold",color:clickedCell.bColor}}>{clickedCell.b}</span>
+                  <div style={{marginLeft:"auto",display:"flex",gap:6,flexWrap:"wrap"}}>
+                    {clickedCell.shared.map(s=>{ const domain=DOMAIN_MAP[s]||"Unknown"; return <Tag key={s} color={(DOMAIN_META[domain]||{color:"#888"}).color}>{s}</Tag>; })}
                   </div>
-                  <div style={{ fontSize:11, color:"#444", marginBottom:8 }}>{m.name}</div>
-                  <ResponsiveContainer width="100%" height={210}>
-                    <RadarChart data={radarData} margin={{ top:8, right:20, bottom:8, left:20 }}>
-                      <PolarGrid stroke="#2a2d3a" />
-                      <PolarAngleAxis dataKey="domain" tick={{ fill:"#777", fontSize:12, fontFamily:"monospace" }} />
-                      <PolarRadiusAxis domain={[0,5]} tick={false} axisLine={false} />
-                      <Radar dataKey="value" stroke={m.color} fill={m.color} fillOpacity={0.25} dot={{ r:3, fill:m.color, strokeWidth:0 }} />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:4, marginTop:2 }}>
-                    {DOMAINS.map(d=>(
-                      <div key={d} style={{ display:"flex", alignItems:"center", gap:5 }}>
-                        <div style={{ width:6, height:6, borderRadius:2, background:DOMAIN_META[d].color, flexShrink:0 }} />
-                        <span style={{ fontSize:10, color:"#555" }}>{DOMAIN_META[d].short}: <span style={{ color:"#888" }}>{member.dc[d]}</span></span>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              );
-            })}
+                </div>
+                <p style={{fontSize:13,lineHeight:1.85,color:"#c8c4bc"}}>{activeNarrative.text}</p>
+                <button onClick={()=>setClickedCell(null)} style={{marginTop:16,background:"none",border:`1px solid ${BORDER}`,borderRadius:6,padding:"5px 14px",color:"#555",cursor:"pointer",fontSize:11,fontFamily:"monospace",letterSpacing:"0.1em"}}>CLOSE</button>
+              </Card>
+            ) : hoverCell&&!clickedCell ? (
+              <div style={{background:"#0f1117",borderRadius:10,padding:"14px 20px",border:`1px solid ${BORDER}`,transition:"all 0.15s"}}>
+                <div style={{fontSize:13,marginBottom:8}}>
+                  <span style={{color:MEMBERS.find(m=>m.first===hoverCell.a).color,fontWeight:"bold"}}>{hoverCell.a}</span>
+                  <span style={{color:"#555"}}> and </span>
+                  <span style={{color:MEMBERS.find(m=>m.first===hoverCell.b).color,fontWeight:"bold"}}>{hoverCell.b}</span>
+                  <span style={{color:"#666",fontSize:12}}> — {hoverCell.shared.length} shared strength{hoverCell.shared.length!==1?"s":""} · click to read full narrative</span>
+                </div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {hoverCell.shared.length>0?hoverCell.shared.map(s=>{ const domain=DOMAIN_MAP[s]||"Unknown"; return <Tag key={s} color={(DOMAIN_META[domain]||{color:"#888"}).color}>{s}</Tag>; }):<span style={{fontSize:12,color:"#444",fontFamily:"monospace"}}>No shared strengths in top 10</span>}
+                </div>
+              </div>
+            ) : (
+              <div style={{textAlign:"center",padding:"20px 0",color:"#2a2d3a",fontFamily:"monospace",fontSize:12}}>hover to preview · click any cell to read the pairing narrative</div>
+            )}
           </div>
         </div>
       )}
 
+      {/* ══ RADAR ══ */}
+      {tab==="Radar Chart" && (
+        <div>
+          <Card style={{marginBottom:16}}>
+            <SLabel>Team Average</SLabel>
+            <div style={{display:"flex",alignItems:"center",gap:40,flexWrap:"wrap"}}>
+              <ResponsiveContainer width={260} height={240}>
+                <RadarChart data={DOMAINS.map(d=>({domain:DOMAIN_META[d].short,avg:Math.round((domainTotals[d]/9)*10)/10}))} margin={{top:10,right:20,bottom:10,left:20}}>
+                  <PolarGrid stroke="#2a2d3a"/>
+                  <PolarAngleAxis dataKey="domain" tick={{fill:"#888",fontSize:13,fontFamily:"monospace"}}/>
+                  <PolarRadiusAxis domain={[0,5]} tick={false} axisLine={false}/>
+                  <Radar dataKey="avg" stroke={C} fill={C} fillOpacity={0.1} dot={{r:4,fill:C,strokeWidth:0}}/>
+                </RadarChart>
+              </ResponsiveContainer>
+              <div style={{flex:1,minWidth:200}}>
+                <p style={{fontSize:12,color:"#555",marginBottom:16,lineHeight:1.7}}>Average top-10 themes per domain across all 9 members. The team skews toward Relationship Building with a notable Influencing gap.</p>
+                {DOMAINS.map(d=>(<div key={d} style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}><div style={{width:8,height:8,borderRadius:2,background:DOMAIN_META[d].color,flexShrink:0}}/><span style={{fontSize:12,color:"#777",width:170}}>{d}</span><div style={{flex:1,background:"#1e2030",borderRadius:3,height:5}}><div style={{width:`${(domainTotals[d]/TOTAL)*100}%`,height:"100%",background:DOMAIN_META[d].color,borderRadius:3}}/></div><span style={{fontSize:12,fontFamily:"monospace",color:"#555",width:40,textAlign:"right"}}>{(domainTotals[d]/9).toFixed(1)}</span></div>))}
+              </div>
+            </div>
+          </Card>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
+            {MEMBERS.map(m=>{ const on=visible.has(m.first); return (<button key={m.first} onClick={()=>toggleMember(m.first)} style={{background:on?m.color+"22":"#161820",border:`1px solid ${on?m.color:BORDER}`,borderRadius:20,padding:"5px 16px",cursor:"pointer",fontSize:12,color:on?m.color:"#555",transition:"all 0.15s"}}>{m.first}</button>); })}
+            <button onClick={()=>setVisible(new Set(MEMBERS.map(m=>m.first)))} style={{background:"none",border:`1px solid ${BORDER}`,borderRadius:20,padding:"5px 14px",cursor:"pointer",fontSize:11,color:"#555",fontFamily:"monospace",letterSpacing:"0.1em"}}>ALL</button>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:14}}>
+            {MEMBERS.filter(m=>visible.has(m.first)).map(m=>{ const member=memberDomains.find(x=>x.first===m.first); const dominant=Object.entries(member.dc).sort((a,b)=>b[1]-a[1])[0][0]; const radarData=DOMAINS.map(d=>({domain:DOMAIN_META[d].short,value:member.dc[d]})); return (
+              <Card key={m.first}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2}}><span style={{fontSize:15,color:m.color,fontWeight:"bold"}}>{m.first}</span><Tag color={DOMAIN_META[dominant].color}>{DOMAIN_META[dominant].short}</Tag></div>
+                <div style={{fontSize:11,color:"#444",marginBottom:8}}>{m.name}</div>
+                <ResponsiveContainer width="100%" height={210}>
+                  <RadarChart data={radarData} margin={{top:8,right:20,bottom:8,left:20}}>
+                    <PolarGrid stroke="#2a2d3a"/>
+                    <PolarAngleAxis dataKey="domain" tick={{fill:"#777",fontSize:12,fontFamily:"monospace"}}/>
+                    <PolarRadiusAxis domain={[0,5]} tick={false} axisLine={false}/>
+                    <Radar dataKey="value" stroke={m.color} fill={m.color} fillOpacity={0.25} dot={{r:3,fill:m.color,strokeWidth:0}}/>
+                  </RadarChart>
+                </ResponsiveContainer>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,marginTop:2}}>
+                  {DOMAINS.map(d=>(<div key={d} style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:6,height:6,borderRadius:2,background:DOMAIN_META[d].color,flexShrink:0}}/><span style={{fontSize:10,color:"#555"}}>{DOMAIN_META[d].short}: <span style={{color:"#888"}}>{member.dc[d]}</span></span></div>))}
+                </div>
+              </Card>
+            ); })}
+          </div>
+        </div>
+      )}
+
+      {/* ══ MOST LIKELY TO ══ */}
       {tab==="Most Likely To" && (
         <div>
-          <p style={{ fontSize:13, color:"#555", marginBottom:24, fontFamily:"monospace", lineHeight:1.7 }}>
-            Based purely on each persons CliftonStrengths profile. Click a card to reveal the answer.
-          </p>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))", gap:14 }}>
-            {MOST_LIKELY.map((item,i)=>{
-              const isRevealed=revealed.has(i);
-              return (
-                <div key={i} onClick={()=>toggleReveal(i)} style={{
-                  background:isRevealed ? "#161820" : "#0f1117",
-                  border:`1px solid ${isRevealed ? item.color+"55" : BORDER}`,
-                  borderTop:`3px solid ${isRevealed ? item.color : "#2a2d3a"}`,
-                  borderRadius:12, padding:"20px",
-                  cursor:"pointer", transition:"all 0.2s", userSelect:"none",
-                }}>
-                  <div style={{ fontSize:28, marginBottom:10 }}>{item.emoji}</div>
-                  <div style={{ fontSize:14, color:"#ccc", lineHeight:1.5, marginBottom:16, minHeight:44 }}>
-                    {item.question}
-                  </div>
-                  {!isRevealed && (
-                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                      <div style={{ flex:1, height:1, background:BORDER }} />
-                      <span style={{ fontSize:10, color:"#444", fontFamily:"monospace", letterSpacing:"0.15em" }}>CLICK TO REVEAL</span>
-                      <div style={{ flex:1, height:1, background:BORDER }} />
-                    </div>
-                  )}
-                  {isRevealed && (
-                    <div className="fade-in">
-                      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
-                        <div style={{ width:4, height:28, borderRadius:2, background:item.color, flexShrink:0 }} />
-                        <span style={{ fontSize:18, fontWeight:"bold", color:item.color }}>{item.person}</span>
-                      </div>
-                      <p style={{ fontSize:12, color:"#888", lineHeight:1.7, margin:0 }}>{item.reason}</p>
-                      <div style={{ marginTop:12, fontSize:10, color:"#333", fontFamily:"monospace", letterSpacing:"0.1em", textAlign:"right" }}>
-                        CLICK TO HIDE
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <p style={{fontSize:13,color:"#555",marginBottom:24,fontFamily:"monospace",lineHeight:1.7}}>Based purely on each persons CliftonStrengths profile. Click a card to reveal the answer.</p>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
+            {MOST_LIKELY.map((item,i)=>{ const isRevealed=revealed.has(i); return (
+              <div key={i} onClick={()=>toggleReveal(i)} style={{background:isRevealed?"#161820":"#0f1117",border:`1px solid ${isRevealed?item.color+"55":BORDER}`,borderTop:`3px solid ${isRevealed?item.color:"#2a2d3a"}`,borderRadius:12,padding:"20px",cursor:"pointer",transition:"all 0.2s",userSelect:"none"}}>
+                <div style={{fontSize:28,marginBottom:10}}>{item.emoji}</div>
+                <div style={{fontSize:14,color:"#ccc",lineHeight:1.5,marginBottom:16,minHeight:44}}>{item.question}</div>
+                {!isRevealed&&(<div style={{display:"flex",alignItems:"center",gap:8}}><div style={{flex:1,height:1,background:BORDER}}/><span style={{fontSize:10,color:"#444",fontFamily:"monospace",letterSpacing:"0.15em"}}>CLICK TO REVEAL</span><div style={{flex:1,height:1,background:BORDER}}/></div>)}
+                {isRevealed&&(<div className="fade-in"><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}><div style={{width:4,height:28,borderRadius:2,background:item.color,flexShrink:0}}/><span style={{fontSize:18,fontWeight:"bold",color:item.color}}>{item.person}</span></div><p style={{fontSize:12,color:"#888",lineHeight:1.7,margin:0}}>{item.reason}</p><div style={{marginTop:12,fontSize:10,color:"#333",fontFamily:"monospace",letterSpacing:"0.1em",textAlign:"right"}}>CLICK TO HIDE</div></div>)}
+              </div>
+            ); })}
           </div>
         </div>
       )}
 
-      <div style={{ textAlign:"center", marginTop:40, fontSize:11, color:"#2a2d3a", fontFamily:"monospace", letterSpacing:"0.1em" }}>
+      <div style={{textAlign:"center",marginTop:40,fontSize:11,color:"#2a2d3a",fontFamily:"monospace",letterSpacing:"0.1em"}}>
         CLIFTONSTRENGTHS · GALLUP, INC. · GRANTS TEAM 2026
       </div>
     </div>
